@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { BoardProps } from "./Board.type";
 import { useResize } from "../../hooks/useResize";
 import useMatrixStore from "../../stores/matrix";
@@ -7,7 +7,7 @@ import useCurrentTileStore from "../../stores/currentTile";
 import useFrameTime from "../../hooks/useFrameRate";
 import useGroundStore from "../../stores/ground";
 
-const Board = ({ ...props }: BoardProps) => {
+const Board = ({ frame, isRunning, setIsRunning, gameOver, setGameOver }: BoardProps) => {
 
   const matrix = useMatrixStore((state) => state.matrix);
   const updateMatrix = useMatrixStore((state) => state.updateMatrix)
@@ -23,8 +23,6 @@ const Board = ({ ...props }: BoardProps) => {
   const clearTile = useCurrentTileStore((state) => state.clearTile)
   const updateGround = useGroundStore((state) => state.updateGroundMatrix)
   const groundMatrix = useGroundStore((state) => state.groundMatrix)
-
-  const frame = useFrameTime();
 
   const tileOffset = useMemo(() => {
     if(!currentTile) return 0
@@ -66,11 +64,18 @@ const Board = ({ ...props }: BoardProps) => {
   }, [currentTile, tileRotation, tilePosition])
 
   const handleUpdateGround = () => {
+    if(!currentTile) return;
     const newGroundMatrix = [...groundMatrix.map((el) => [...el])]
-    currentTile?.[tileRotation].forEach((cell) => {
+    for(let cell of currentTile[tileRotation]) {
+      if(cell[0]+tilePosition[0]-tileOffset === 0) {
+        setIsRunning(false)
+        setGameOver(true)
+        break;
+      }
       const y = cell[0]+tilePosition[0]-tileOffset
+      if(y < 0) continue;
       newGroundMatrix[y][cell[1]+tilePosition[1]] = tileColor;
-    })
+    }
     updateGround(newGroundMatrix)
   }
 
@@ -81,7 +86,7 @@ const Board = ({ ...props }: BoardProps) => {
     
     for(let cell of currentTile[tileRotation]) {
       const y = cell[0]+tilePosition[0]-tileOffset
-      if(y < 0) return;
+      if(y < -1) continue;
       if(y >= ROWS-1) {
         collision = true
         break
@@ -124,10 +129,11 @@ const Board = ({ ...props }: BoardProps) => {
     return () => window.removeEventListener('keydown', handleClickDown)
   }, [handleClickDown])
 
-  
-
   useEffect(() => {
-    if(!currentTile) return;
+    if(!currentTile) {
+      createTile();
+      return
+    }
 
     if(detectCollision()) {
       clearTile()
@@ -142,10 +148,7 @@ const Board = ({ ...props }: BoardProps) => {
   }, [frame])
 
   useEffect(() => {
-    if(!currentTile) {
-      createTile();
-      return
-    }
+    if(!currentTile) return;
     
     const newMatrix = [...matrix.map((el) => [...el])]
     currentTile?.[tileRotation].forEach((cell) => {
