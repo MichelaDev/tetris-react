@@ -1,29 +1,35 @@
 import { useEffect, useState } from "react";
 
-const useFrameTime = () => {
-  const [frameTime, setFrameTime] = useState(performance.now());
+const useFrameTime = (isRunning: boolean) => {
+  const [frameTime, setFrameTime] = useState(0);
+  const [currentInt, setCurrentInt] = useState<NodeJS.Timer | null>(null);
+
+  const loop = () => {
+    setFrameTime((prev) => prev + 1)
+  }
 
   useEffect(() => {
-    let frameId: number;
-    let then = new Date().getTime();
-    let interval = 800;
+    if(!currentInt) {
+      setFrameTime(0)
+    }
+  }, [currentInt])
 
-    const frame = (time: number) => {
-      const now = new Date().getTime();
-      const delta = now - then;
+  useEffect(() => {
+    let interval:  NodeJS.Timer | null = null
 
-      if (delta > interval) {
-        then = now - (delta % interval);
-        setFrameTime(time);
-      }
+    if(isRunning && !interval) {
+      interval = setInterval(loop, 100)
+    } 
 
-      frameId = requestAnimationFrame(frame);
-      
-    };
-    
-    requestAnimationFrame(frame);
-    return () => cancelAnimationFrame(frameId);
-  }, []);
+    if(!isRunning && interval) {
+      clearInterval(interval)
+    }
+
+    setCurrentInt(interval)
+
+    return () => {if(interval) clearInterval(interval);}
+
+  }, [isRunning]);
   
   return frameTime;
 };
