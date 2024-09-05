@@ -1,0 +1,11 @@
+.game-board {
+  display: grid;
+  width: max-content;
+  grid-template-columns: repeat(10, auto);
+}
+
+.cell {
+  aspect-ratio: 1 / 1;
+  border: 0.6px solid $tertiary;
+  background-color: $secondary;
+}
