@@ -1,13 +1,12 @@
-import React, { useState } from 'react';
-import Board from './components/Board/Board';
-import useFrameTime from './hooks/useFrameRate';
-import useMatrixStore from './stores/matrix';
-import useGroundStore from './stores/ground';
-import useCurrentTileStore from './stores/currentTile';
-import useScoreStore from './stores/score';
+import React, { useState } from "react";
+import Board from "./components/Board/Board";
+import useFrameTime from "./hooks/useFrameRate";
+import useMatrixStore from "./stores/matrix";
+import useGroundStore from "./stores/ground";
+import useCurrentTileStore from "./stores/currentTile";
+import useScoreStore from "./stores/score";
 
 function App() {
-
   const [isRunning, setIsRunning] = useState(true);
   const [gameOver, setGameOver] = useState(false);
 
@@ -19,8 +18,13 @@ function App() {
 
   const frame = useFrameTime(isRunning);
 
+  const isMobile =
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent
+    );
+
   const handleClick = () => {
-    if(!gameOver) {
+    if (!gameOver) {
       setIsRunning(!isRunning);
       return;
     }
@@ -32,24 +36,35 @@ function App() {
 
     setGameOver(false);
     setIsRunning(true);
-
-  }
+  };
 
   return (
     <div className="App">
-      <header>
-        Tetris
-      </header>
-      <main>
-        <section className='section'>
-          <button onClick={handleClick}>{gameOver ? "Restart" : isRunning ? "Pause" : "Start"}</button>
-          <div>Score: {score}</div>
-          <div>{gameOver && "GAME OVER!"}</div>
-        </section>
-        <section className='section'>
-          <Board frame={frame} isRunning={isRunning} setIsRunning={setIsRunning} gameOver={gameOver} setGameOver={setGameOver} />
-        </section>
-      </main>
+      <header>Tetris</header>
+      {isMobile ? (
+        <h2 style={{ display: "flex", justifyContent: "center" }}>
+          Mobile version not available
+        </h2>
+      ) : (
+        <main>
+          <section className="section">
+            <button onClick={handleClick}>
+              {gameOver ? "Restart" : isRunning ? "Pause" : "Start"}
+            </button>
+            <div>Score: {score}</div>
+            <div>{gameOver && "GAME OVER!"}</div>
+          </section>
+          <section className="section">
+            <Board
+              frame={frame}
+              isRunning={isRunning}
+              setIsRunning={setIsRunning}
+              gameOver={gameOver}
+              setGameOver={setGameOver}
+            />
+          </section>
+        </main>
+      )}
     </div>
   );
 }
