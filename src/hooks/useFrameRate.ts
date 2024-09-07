@@ -18,7 +18,7 @@ const useFrameTime = (isRunning: boolean) => {
     let interval:  NodeJS.Timer | null = null
 
     if(isRunning && !interval) {
-      interval = setInterval(loop, 100)
+      interval = setInterval(loop, 400)
     } 
 
     if(!isRunning && interval) {

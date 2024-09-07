@@ -4,6 +4,7 @@ import useFrameTime from './hooks/useFrameRate';
 import useMatrixStore from './stores/matrix';
 import useGroundStore from './stores/ground';
 import useCurrentTileStore from './stores/currentTile';
+import useScoreStore from './stores/score';
 
 function App() {
 
@@ -13,6 +14,8 @@ function App() {
   const clearMatrix = useMatrixStore((state) => state.clearMatrix);
   const clearGroundMatrix = useGroundStore((state) => state.clearGroundMatrix);
   const clearTile = useCurrentTileStore((state) => state.clearTile);
+  const score = useScoreStore((state) => state.score);
+  const resetScore = useScoreStore((state) => state.reset);
 
   const frame = useFrameTime(isRunning);
 
@@ -25,6 +28,7 @@ function App() {
     clearMatrix();
     clearGroundMatrix();
     clearTile();
+    resetScore();
 
     setGameOver(false);
     setIsRunning(true);
@@ -39,6 +43,7 @@ function App() {
       <main>
         <section className='section'>
           <button onClick={handleClick}>{gameOver ? "Restart" : isRunning ? "Pause" : "Start"}</button>
+          <div>Score: {score}</div>
           <div>{gameOver && "GAME OVER!"}</div>
         </section>
         <section className='section'>

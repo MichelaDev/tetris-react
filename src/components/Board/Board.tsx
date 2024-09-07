@@ -1,11 +1,11 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo } from "react";
 import { BoardProps } from "./Board.type";
 import { useResize } from "../../hooks/useResize";
 import useMatrixStore from "../../stores/matrix";
 import { ROWS } from "../../constants";
 import useCurrentTileStore from "../../stores/currentTile";
-import useFrameTime from "../../hooks/useFrameRate";
 import useGroundStore from "../../stores/ground";
+import useScoreStore from "../../stores/score";
 
 const Board = ({ frame, isRunning, setIsRunning, gameOver, setGameOver }: BoardProps) => {
 
@@ -23,6 +23,8 @@ const Board = ({ frame, isRunning, setIsRunning, gameOver, setGameOver }: BoardP
   const clearTile = useCurrentTileStore((state) => state.clearTile)
   const updateGround = useGroundStore((state) => state.updateGroundMatrix)
   const groundMatrix = useGroundStore((state) => state.groundMatrix)
+  const updateScore = useScoreStore((state) => state.update);
+  const score = useScoreStore((state) => state.score);
 
   const tileOffset = useMemo(() => {
     if(!currentTile) return 0
@@ -40,19 +42,6 @@ const Board = ({ frame, isRunning, setIsRunning, gameOver, setGameOver }: BoardP
     updateMatrix(newMatrix)
   }
 
-  const handleScore = () => {
-    const currMatrix = [...matrix.map((cell) => [...cell])];
-    for(let i = 0; i < currMatrix.length; i++) {
-      const indexComplete = !currMatrix[i].includes('');
-      if(indexComplete) {
-        currMatrix.splice(i, 1);
-        currMatrix.unshift(Array(10).fill(""));
-        updateMatrix(currMatrix);
-        updateGround(currMatrix);
-      }
-    }
-  }
-
   const handleClickDown = useCallback((e: KeyboardEvent) => {
     if(!currentTile) return
     switch(e.code) {
@@ -67,6 +56,7 @@ const Board = ({ frame, isRunning, setIsRunning, gameOver, setGameOver }: BoardP
         updateTilePosition([tilePosition[0], tilePosition[1]-1])
         break
       case "ArrowUp":
+        if(detectBorderCollision("up")) break;
         const rot = tileRotation === currentTile.length-1 ? 0 : tileRotation+1
         clearCurrentTile()
         updateTileRotation(rot)
@@ -89,15 +79,17 @@ const Board = ({ frame, isRunning, setIsRunning, gameOver, setGameOver }: BoardP
       if(y < 0) continue;
       newGroundMatrix[y][cell[1]+tilePosition[1]] = tileColor;
     }
+
     for(let i = 0; i < newGroundMatrix.length; i++) {
       const indexComplete = !newGroundMatrix[i].includes('');
       if(indexComplete) {
+        updateScore(score+10)
         newGroundMatrix.splice(i, 1);
         newGroundMatrix.unshift(Array(10).fill(""));
       }
     }
     updateGround(newGroundMatrix);
-    updateMatrix(newGroundMatrix)
+    updateMatrix(newGroundMatrix);
   }
 
   const detectCollision = () => {
@@ -125,22 +117,43 @@ const Board = ({ frame, isRunning, setIsRunning, gameOver, setGameOver }: BoardP
     return collision
   }
 
-  const detectBorderCollision = (direction: "right" | "left") => {
+  const detectBorderCollision = (direction: "right" | "left" | "up") => {
     if(!currentTile) return false
     let collision = false
-    for(const cell of currentTile[tileRotation]) {
-      const y = cell[0]+tilePosition[0]-tileOffset
-      const x = cell[1]+tilePosition[1]
-      if(y < 0) continue;
-      if(direction === "right" && (x >= 9 || groundMatrix[y][x+1])) {
-        collision = true
-        break
+
+    if(direction === "up") {
+      const rot = tileRotation === currentTile.length-1 ? 0 : tileRotation+1
+      for(const cell of currentTile[rot]) {
+        const y = cell[0]+tilePosition[0]-tileOffset
+        const x = cell[1]+tilePosition[1]
+        if(y < 0) continue;
+        if(groundMatrix[y][x]) {
+          collision = true;
+          break
+        }
+        if(x >= 9 || x <= 0) {
+          collision = true;
+          break
+        }
       }
-      if(direction === "left" && (x <= 0 || groundMatrix[y][x-1])) {
-        collision = true
-        break
+
+    } else {
+
+      for(const cell of currentTile[tileRotation]) {
+        const y = cell[0]+tilePosition[0]-tileOffset
+        const x = cell[1]+tilePosition[1]
+        if(y < 0) continue;
+        if(direction === "right" && (x >= 9 || groundMatrix[y][x+1])) {
+          collision = true
+          break
+        }
+        if(direction === "left" && (x <= 0 || groundMatrix[y][x-1])) {
+          collision = true
+          break
+        }
       }
     }
+
     return collision
   }
 
