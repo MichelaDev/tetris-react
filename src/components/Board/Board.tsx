@@ -40,6 +40,19 @@ const Board = ({ frame, isRunning, setIsRunning, gameOver, setGameOver }: BoardP
     updateMatrix(newMatrix)
   }
 
+  const handleScore = () => {
+    const currMatrix = [...matrix.map((cell) => [...cell])];
+    for(let i = 0; i < currMatrix.length; i++) {
+      const indexComplete = !currMatrix[i].includes('');
+      if(indexComplete) {
+        currMatrix.splice(i, 1);
+        currMatrix.unshift(Array(10).fill(""));
+        updateMatrix(currMatrix);
+        updateGround(currMatrix);
+      }
+    }
+  }
+
   const handleClickDown = useCallback((e: KeyboardEvent) => {
     if(!currentTile) return
     switch(e.code) {
@@ -66,7 +79,7 @@ const Board = ({ frame, isRunning, setIsRunning, gameOver, setGameOver }: BoardP
   const handleUpdateGround = () => {
     if(!currentTile) return;
     const newGroundMatrix = [...groundMatrix.map((el) => [...el])]
-    for(let cell of currentTile[tileRotation]) {
+    for(const cell of currentTile[tileRotation]) {
       if(cell[0]+tilePosition[0]-tileOffset === 0) {
         setIsRunning(false)
         setGameOver(true)
@@ -76,7 +89,15 @@ const Board = ({ frame, isRunning, setIsRunning, gameOver, setGameOver }: BoardP
       if(y < 0) continue;
       newGroundMatrix[y][cell[1]+tilePosition[1]] = tileColor;
     }
-    updateGround(newGroundMatrix)
+    for(let i = 0; i < newGroundMatrix.length; i++) {
+      const indexComplete = !newGroundMatrix[i].includes('');
+      if(indexComplete) {
+        newGroundMatrix.splice(i, 1);
+        newGroundMatrix.unshift(Array(10).fill(""));
+      }
+    }
+    updateGround(newGroundMatrix);
+    updateMatrix(newGroundMatrix)
   }
 
   const detectCollision = () => {
@@ -84,7 +105,7 @@ const Board = ({ frame, isRunning, setIsRunning, gameOver, setGameOver }: BoardP
 
     let collision = false
     
-    for(let cell of currentTile[tileRotation]) {
+    for(const cell of currentTile[tileRotation]) {
       const y = cell[0]+tilePosition[0]-tileOffset
       if(y < -1) continue;
       if(y >= ROWS-1) {
@@ -107,7 +128,7 @@ const Board = ({ frame, isRunning, setIsRunning, gameOver, setGameOver }: BoardP
   const detectBorderCollision = (direction: "right" | "left") => {
     if(!currentTile) return false
     let collision = false
-    for(let cell of currentTile[tileRotation]) {
+    for(const cell of currentTile[tileRotation]) {
       const y = cell[0]+tilePosition[0]-tileOffset
       const x = cell[1]+tilePosition[1]
       if(y < 0) continue;
@@ -154,7 +175,6 @@ const Board = ({ frame, isRunning, setIsRunning, gameOver, setGameOver }: BoardP
     currentTile?.[tileRotation].forEach((cell) => {
       const y = cell[0]+tilePosition[0]-tileOffset
       if(y < 0) return;
-      // console.log(y, cell[1]+tilePosition[1])
       newMatrix[y][cell[1]+tilePosition[1]] = tileColor;
     })
     updateMatrix(newMatrix)
